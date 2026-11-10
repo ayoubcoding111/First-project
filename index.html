@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Home of Mind Drift</title>
+<!--
+  HOW TO CHANGE CHAPTER TITLES
+  Edit the CHAPTERS array at the top of the <script> block near the bottom of this file.
+  Each entry has:
+    label  - the small heading, e.g. "Chapter 1" (shown in the contents and on the chapter page)
+    title  - the chapter name, e.g. "Hartwell Academic Press" (leave "" to show only the label)
+    body   - two paragraphs of text
+    link   - optional; when set, the contents entry opens this URL in a new tab instead of turning pages
+  Add, remove or reorder entries and the book, page numbers and contents rebuild themselves.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=EB+Garamond:ital@0;1&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#f4ecdb;--paper:#fbf6ea;--navy:#1c2a44;--charcoal:#2e2e30;--muted:#5f584c;--pw:400px}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--cream);color:var(--charcoal);font-family:"EB Garamond",Georgia,serif}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--navy);outline-offset:3px}
+.sound{position:fixed;top:14px;right:14px;z-index:50;background:var(--paper);border:1px solid var(--navy);border-radius:99px;padding:6px 14px;cursor:pointer;font-size:15px;color:var(--navy)}
+.sound[aria-pressed="true"]{background:var(--navy);color:var(--cream)}
+/* Intro */
+#intro{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;z-index:10}
+.type{font-family:"Special Elite","Courier New",monospace;font-size:clamp(1.15rem,4.2vw,2rem);line-height:1.6;color:var(--charcoal);white-space:pre-wrap;max-width:30ch;min-height:5.2em;margin:0}
+.cursor{display:inline-block;width:.55em;height:1.05em;margin-left:2px;vertical-align:-.15em;background:var(--navy);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.enter{margin-top:28px;padding:12px 30px;background:var(--navy);color:var(--cream);border:0;border-radius:3px;font-family:"Cormorant Garamond",serif;font-size:1.3rem;letter-spacing:.06em;cursor:pointer;opacity:0;visibility:hidden}
+/* Book */
+#stage{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;visibility:hidden;opacity:0;touch-action:pan-y}
+.book{position:relative;width:calc(var(--pw)*2);height:calc(var(--pw)*1.42)}
+.cover{position:absolute;inset:-12px;background:var(--navy);border-radius:6px;box-shadow:0 24px 50px rgba(28,42,68,.35)}
+.cover-title{position:absolute;left:0;top:0;width:50%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--cream);font-family:"Cormorant Garamond",serif;font-size:calc(var(--pw)*.07);text-align:center;letter-spacing:.04em}
+.cover-title small{font-size:.45em;letter-spacing:.3em;margin-top:.6em;opacity:.7}
+.pages{position:absolute;inset:0}
+.leaf{position:absolute;top:0;left:50%;width:var(--pw);height:100%;transform-style:preserve-3d;-webkit-transform-style:preserve-3d;cursor:pointer}
+.face{position:absolute;inset:0;overflow:hidden;background:var(--paper);-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.front{background:linear-gradient(to right,rgba(0,0,0,.13),rgba(0,0,0,0) 9%),var(--paper);border-radius:0 3px 3px 0}
+.back{transform:rotateY(180deg);background:linear-gradient(to left,rgba(0,0,0,.13),rgba(0,0,0,0) 9%),var(--paper);border-radius:3px 0 0 3px}
+.shade{position:absolute;inset:0;pointer-events:none;opacity:0}
+.front .shade{background:linear-gradient(to right,rgba(0,0,0,.08),rgba(0,0,0,.38) 70%,rgba(255,255,255,.25) 92%,rgba(0,0,0,.3))}
+.back .shade{background:linear-gradient(to left,rgba(0,0,0,.08),rgba(0,0,0,.38) 70%,rgba(255,255,255,.25) 92%,rgba(0,0,0,.3))}
+.inner{position:absolute;inset:0;padding:11% 12% 14%;font-size:max(14px,calc(var(--pw)*.037));line-height:1.55}
+.label{font-family:"Cormorant Garamond",serif;text-transform:uppercase;letter-spacing:.22em;font-size:.78em;color:var(--muted);margin:0 0 .4em}
+h2{font-family:"Cormorant Garamond",serif;font-weight:600;color:var(--navy);font-size:1.9em;line-height:1.1;margin:0 0 .7em}
+.inner p{margin:0 0 1em}
+.drop::first-letter{float:left;font-family:"Cormorant Garamond",serif;font-size:3.1em;line-height:.85;padding:.06em .08em 0 0;color:var(--navy)}
+.orn{text-align:center;color:var(--navy);font-size:1.4em;margin-top:1.2em}
+.num{position:absolute;bottom:5%;left:0;right:0;text-align:center;font-size:.8em;color:var(--muted)}
+.toc{list-style:none;margin:0;padding:0}
+.toc button,.toc a{display:flex;align-items:baseline;width:100%;gap:.4em;padding:.38em 0;background:none;border:0;text-align:left;cursor:pointer;color:var(--charcoal);text-decoration:none;font-size:1em}
+.toc i{flex:1;border-bottom:1px dotted var(--muted);transform:translateY(-.25em)}
+.toc button:hover span,.toc a:hover span{color:var(--navy);text-decoration:underline}
+.ext{display:inline-block;margin-top:.4em;padding:.4em 1em;border:1px solid var(--navy);color:var(--navy);text-decoration:none;border-radius:2px}
+.controls{display:flex;align-items:center;gap:12px}
+.controls button{background:var(--paper);border:1px solid var(--navy);color:var(--navy);border-radius:3px;padding:8px 16px;cursor:pointer;font-size:16px}
+.controls button:disabled{opacity:.35;cursor:default}
+.status{min-width:7.5em;text-align:center;font-size:15px;color:var(--muted)}
+/* Single-page mode (phones) */
+.book.single{width:var(--pw)}
+.book.single .pages{overflow:hidden}
+.book.single .leaf{left:0}
+.book.single .cover-title{display:none}
+@media (max-width:767px){#stage{gap:18px;padding-top:40px}.controls{gap:8px}.controls button{padding:8px 11px;font-size:15px;white-space:nowrap}.status{min-width:0;font-size:14px;white-space:nowrap}}
+@media (prefers-reduced-motion:reduce){.cursor{animation:none}}
+</style>
+</head>
+<body>
+<button class="sound" id="sound" aria-pressed="false">Sound: off</button>
+
+<section id="intro" aria-label="Welcome">
+  <p class="type" aria-live="polite"><span id="typed"></span><span class="cursor" aria-hidden="true"></span></p>
+  <button class="enter" id="enter">Enter the book</button>
+</section>
+
+<main id="stage" aria-label="Book">
+  <div class="book" id="book">
+    <div class="cover"><div class="cover-title">Home of Mind Drift<small>LLC</small></div></div>
+    <div class="pages" id="pages"></div>
+  </div>
+  <nav class="controls" aria-label="Page navigation">
+    <button id="prev" aria-label="Previous page">&larr; Prev</button>
+    <span class="status" id="status" aria-live="polite"></span>
+    <button id="next" aria-label="Next page">Next &rarr;</button>
+    <button id="contents">Contents</button>
+  </nav>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+const CHAPTERS = [
+  {label:'Preface', title:'', body:[
+    'Home of Mind Drift is a small house for books, essays and ideas that take their time. We publish work that rewards a slower kind of reading.',
+    'This book is our front door. Turn the pages to meet our imprints, our writing and the people behind them.']},
+  {label:'Chapter 1', title:'Hartwell Academic Press', body:[
+    'Hartwell Academic Press is our publishing imprint for scholarly and educational titles, edited with care and built to last.',
+    'Placeholder: book covers, short descriptions and links to Amazon listings will live here.']},
+  {label:'Chapter 2', title:'Mind Drift', body:[
+    'Mind Drift collects reflective essays on attention, memory and the quiet hours in between.',
+    'Placeholder: featured essays and upcoming books, each with a cover and a short note.']},
+  {label:'Chapter 3', title:'PETRAFIED', link:'https://petrafiedofficial.com', body:[
+    'PETRAFIED is our creative brand, with its own home on the web.',
+    'Visit the PETRAFIED site to see the full collection.']},
+  {label:'Chapter 4', title:'Behind the Pages', body:[
+    'Every book begins as a stray thought written in a margin. This chapter is about the people and process behind ours.',
+    'Placeholder: a short story of how the company began and how we work with authors.']},
+  {label:'Chapter 5', title:'Say Hello', body:[
+    'We would love to hear from readers, writers and collaborators.',
+    'Placeholder: email address, social links and a short note on response times.']},
+];
+const INTRO = 'Welcome to Home of Mind Drift.\nPull up a chair, turn the page,\nand let your mind drift.';
+
+const $ = id => document.getElementById(id);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const mq = matchMedia('(max-width: 767px)');
+const book = $('book'), pagesEl = $('pages');
+const heading = c => c.label + (c.title ? ': ' + c.title : '');
+
+/* ---------- Pages: contents page, then two pages per chapter ---------- */
+const pages = [''];
+CHAPTERS.forEach(c => {
+  c.start = pages.length;
+  pages.push(`<p class="label">${c.label}</p><h2>${c.title || c.label}</h2><p class="drop">${c.body[0]}</p>`);
+  pages.push(`<p>${c.body[1]}</p>` + (c.link ? `<a class="ext" href="${c.link}" target="_blank" rel="noopener">Visit ${c.title} &nearr;</a>` : '') + `<div class="orn" aria-hidden="true">&#10086;</div>`);
+});
+pages[0] = `<p class="label">Contents</p><h2>Home of Mind Drift</h2><ol class="toc">` + CHAPTERS.map(c => c.link
+  ? `<li><a href="${c.link}" target="_blank" rel="noopener"><span>${heading(c)} &nearr;</span><i></i><b>${c.start + 1}</b></a></li>`
+  : `<li><button data-goto="${c.start}"><span>${heading(c)}</span><i></i><b>${c.start + 1}</b></button></li>`).join('') + `</ol>`;
+const pageHTML = i => i < pages.length ? `<div class="inner">${pages[i]}<span class="num">${i + 1}</span></div>` : '';
+
+/* ---------- Book state. Desktop: leaf i = pages 2i (front) / 2i+1 (back). Phone: leaf i = page i. ---------- */
+let leaves = [], state = 0, single = false, busy = false, tl = null, curPage = 0;
+const maxState = () => single ? pages.length - 1 : Math.floor(pages.length / 2);
+const spreadFor = p => single ? p : Math.ceil(p / 2);
+
+function size() {
+  const vw = innerWidth, vh = innerHeight, s = mq.matches;
+  const pw = s ? Math.min(vw * 0.86, (vh - 190) / 1.42) : Math.min(vw * 0.45, (vh - 150) / 1.42, 520);
+  document.documentElement.style.setProperty('--pw', Math.floor(pw) + 'px');
+}
+
+function build() {
+  if (tl) tl.progress(1);
+  single = mq.matches;
+  book.classList.toggle('single', single);
+  pagesEl.innerHTML = '';
+  const n = single ? pages.length : Math.ceil(pages.length / 2);
+  leaves = [];
+  for (let i = 0; i < n; i++) {
+    const leaf = document.createElement('div');
+    leaf.className = 'leaf';
+    leaf.innerHTML = `<div class="face front">${pageHTML(single ? i : 2 * i)}<div class="shade"></div></div>` +
+                     `<div class="face back">${single ? '' : pageHTML(2 * i + 1)}<div class="shade"></div></div>`;
+    pagesEl.appendChild(leaf);
+    leaves.push(leaf);
+  }
+  state = Math.min(spreadFor(curPage), maxState());
+  leaves.forEach((l, i) => gsap.set(l, {transformPerspective: 2400, transformOrigin: '0% 50%',
+    rotationY: i < state ? -180 : 0, zIndex: i < state ? i + 1 : n - i + 1}));
+  update();
+}
+
+// Darken the face as it turns away from the light, with a highlight near the edge to suggest a curl.
+function shade(leaf) {
+  const a = -gsap.getProperty(leaf, 'rotationY');
+  const [f, b] = leaf.querySelectorAll('.shade');
+  f.style.opacity = a < 90 ? Math.sin(a * Math.PI / 180) * 0.9 : 0;
+  b.style.opacity = a > 90 ? Math.sin(a * Math.PI / 180) * 0.9 : 0;
+}
+
+function go(t) {
+  t = Math.max(0, Math.min(maxState(), t));
+  if (busy || t === state) return;
+  const dist = Math.abs(t - state), fwd = t > state, n = leaves.length;
+  const dur = reduce ? 0 : dist > 2 ? Math.max(0.3, 0.9 / Math.sqrt(dist)) : 0.85;
+  const gap = dist > 1 ? dur * 0.42 : 0;
+  const order = [];
+  if (fwd) for (let i = state; i < t; i++) order.push(i); else for (let i = state - 1; i >= t; i--) order.push(i);
+  busy = true;
+  tl = gsap.timeline({onComplete: () => { state = t; busy = false; tl = null; update(); }});
+  order.forEach((i, k) => {
+    const leaf = leaves[i];
+    tl.set(leaf, {zIndex: 1000 + k}, k * gap)
+      .call(flipSound, null, k * gap)
+      .to(leaf, {rotationY: fwd ? -180 : 0, duration: dur, ease: dist > 2 ? 'power1.inOut' : 'power2.inOut',
+        onUpdate: () => shade(leaf),
+        onComplete: () => { gsap.set(leaf, {zIndex: fwd ? i + 1 : n - i + 1}); shade(leaf); }}, k * gap);
+  });
+}
+
+function update() {
+  const vis = single ? [leaves[state].children[0]]
+    : [leaves[state - 1]?.children[1], leaves[state]?.children[0]].filter(Boolean);
+  leaves.forEach(l => [...l.children].forEach(f => { f.inert = !vis.includes(f); f.setAttribute('aria-hidden', !vis.includes(f)); }));
+  const first = single ? state : Math.max(0, 2 * state - 1), last = single ? state : Math.min(pages.length - 1, 2 * state);
+  curPage = first;
+  $('status').textContent = first === last ? `Page ${first + 1} of ${pages.length}` : `Pages ${first + 1}–${last + 1} of ${pages.length}`;
+  $('prev').disabled = state === 0;
+  $('next').disabled = state === maxState();
+}
+
+/* ---------- Input: buttons, contents, page edges, keys, swipe ---------- */
+$('prev').onclick = () => go(state - 1);
+$('next').onclick = () => go(state + 1);
+$('contents').onclick = () => go(0);
+let sx = 0, sy = 0, swiped = false;
+book.addEventListener('pointerdown', e => { sx = e.clientX; sy = e.clientY; swiped = false; });
+book.addEventListener('pointerup', e => {
+  const dx = e.clientX - sx, dy = e.clientY - sy;
+  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) { swiped = true; go(state + (dx < 0 ? 1 : -1)); }
+});
+book.addEventListener('click', e => {
+  if (swiped) return;
+  const toc = e.target.closest('[data-goto]');
+  if (toc) return go(spreadFor(+toc.dataset.goto));
+  if (e.target.closest('a,button')) return;
+  const r = book.getBoundingClientRect(), x = (e.clientX - r.left) / r.width;
+  go(state + (x < (single ? 0.3 : 0.5) ? -1 : 1));
+});
+addEventListener('keydown', e => {
+  if (!bookOpen) return;
+  if (e.key === 'ArrowRight') go(state + 1);
+  if (e.key === 'ArrowLeft') go(state - 1);
+});
+addEventListener('resize', () => { size(); if (mq.matches !== single) build(); });
+
+/* ---------- Sound (Web Audio, synthesized, off by default) ---------- */
+let ctx = null, soundOn = false;
+$('sound').onclick = () => {
+  soundOn = !soundOn;
+  if (soundOn && !ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (ctx && ctx.state === 'suspended') ctx.resume();
+  $('sound').setAttribute('aria-pressed', soundOn);
+  $('sound').textContent = 'Sound: ' + (soundOn ? 'on' : 'off');
+};
+function noise(dur, freq, gain, q) {
+  if (!soundOn || !ctx) return;
+  const len = Math.floor(ctx.sampleRate * dur), buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+  const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  src.buffer = buf; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q; g.gain.value = gain;
+  src.connect(f).connect(g).connect(ctx.destination); src.start();
+}
+const keySound = () => noise(0.045, 1700 + Math.random() * 1000, 0.6, 2);
+const flipSound = () => noise(0.3, 900, 0.25, 0.5);
+function carriageReturn() {
+  if (!soundOn || !ctx) return;
+  noise(0.3, 500, 0.35, 0.7);
+  const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime + 0.22;
+  o.frequency.value = 2093; g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1);
+  o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + 1.2);
+}
+
+/* ---------- Typewriter intro ---------- */
+let typedLen = 0, typingDone = false, bookOpen = false, timer;
+function typeNext() {
+  if (typedLen >= INTRO.length) return finishTyping();
+  const ch = INTRO[typedLen++];
+  $('typed').textContent = INTRO.slice(0, typedLen);
+  if (ch === '\n') carriageReturn(); else if (ch !== ' ') keySound();
+  let d = 45 + Math.random() * 85;
+  if (ch === ',') d += 220; if (ch === '.') d += 380; if (ch === '\n') d += 500; if (Math.random() < 0.06) d += 180;
+  timer = setTimeout(typeNext, d);
+}
+function finishTyping() {
+  if (typingDone) return;
+  typingDone = true; clearTimeout(timer);
+  $('typed').textContent = INTRO;
+  gsap.to('#enter', {autoAlpha: 1, y: 0, duration: reduce ? 0 : 0.6, startAt: {y: 10}});
+  $('enter').focus({preventScroll: true});
+}
+$('intro').addEventListener('click', e => { if (!typingDone && e.target.id !== 'enter') finishTyping(); });
+$('enter').onclick = () => {
+  bookOpen = true;
+  const d = reduce ? 0 : 1;
+  gsap.timeline()
+    .to('#intro', {autoAlpha: 0, y: -30, duration: 0.7 * d, ease: 'power2.in'})
+    .fromTo('#stage', {autoAlpha: 0}, {autoAlpha: 1, duration: 0.5 * d}, '-=0.1')
+    .fromTo('#book', {scale: 0.9, y: 30, rotationX: 12, transformPerspective: 1200}, {scale: 1, y: 0, rotationX: 0, duration: 1 * d, ease: 'power3.out', clearProps: 'transform'}, '<')
+    .add(() => { $('intro').hidden = true; pagesEl.querySelector('.toc button')?.focus({preventScroll: true}); });
+};
+
+size(); build();
+if (reduce) finishTyping(); else setTimeout(typeNext, 600);
+</script>
+</body>
+</html>
