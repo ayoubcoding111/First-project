@@ -182,6 +182,7 @@ function go(t) {
   const order = [];
   if (fwd) for (let i = state; i < t; i++) order.push(i); else for (let i = state - 1; i >= t; i--) order.push(i);
   busy = true;
+  showLeaves(Math.min(state, t) - 1, Math.max(state, t));
   tl = gsap.timeline({onComplete: () => { state = t; busy = false; tl = null; update(); }});
   order.forEach((i, k) => {
     const leaf = leaves[i];
@@ -193,7 +194,11 @@ function go(t) {
   });
 }
 
+// Leaves buried in either stack can't be seen; skipping them keeps every frame cheap.
+const showLeaves = (lo, hi) => leaves.forEach((l, i) => { l.style.visibility = i >= lo && i <= hi ? '' : 'hidden'; });
+
 function update() {
+  showLeaves(state - 1, state + 1);
   const vis = single ? [leaves[state].children[0]]
     : [leaves[state - 1]?.children[1], leaves[state]?.children[0]].filter(Boolean);
   leaves.forEach(l => [...l.children].forEach(f => { f.inert = !vis.includes(f); f.setAttribute('aria-hidden', !vis.includes(f)); }));
@@ -229,31 +234,59 @@ addEventListener('keydown', e => {
 });
 addEventListener('resize', () => { size(); if (mq.matches !== single) build(); });
 
-/* ---------- Sound (Web Audio, synthesized, off by default) ---------- */
-let ctx = null, soundOn = false;
+/* ---------- Sound (Web Audio, synthesized, off by default) ----------
+   Each sound is layered: a short bright transient + a muffled body + a low thump,
+   all through one soft master bus, with slight random variation so no two keys match. */
+let ctx = null, out = null, noiseBuf = null, soundOn = false;
+function initAudio() {
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 5500;
+  out = ctx.createGain(); out.gain.value = 0.45;
+  out.connect(lp).connect(ctx.destination);
+  noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+  const d = noiseBuf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+}
 $('sound').onclick = () => {
   soundOn = !soundOn;
-  if (soundOn && !ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (soundOn && !ctx) initAudio();
   if (ctx && ctx.state === 'suspended') ctx.resume();
   $('sound').setAttribute('aria-pressed', soundOn);
   $('sound').textContent = 'Sound: ' + (soundOn ? 'on' : 'off');
 };
-function noise(dur, freq, gain, q) {
-  if (!soundOn || !ctx) return;
-  const len = Math.floor(ctx.sampleRate * dur), buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
-  const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
-  src.buffer = buf; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q; g.gain.value = gain;
-  src.connect(f).connect(g).connect(ctx.destination); src.start();
+function env(g, t0, gain, attack, dur) {
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(gain, t0 + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
 }
-const keySound = () => noise(0.045, 1700 + Math.random() * 1000, 0.6, 2);
-const flipSound = () => noise(0.3, 900, 0.25, 0.5);
+function burst(t, dur, type, freq, q, gain, attack = 0.002) {
+  const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(), t0 = ctx.currentTime + t;
+  s.buffer = noiseBuf; f.type = type; f.frequency.value = freq; f.Q.value = q; env(g, t0, gain, attack, dur);
+  s.connect(f).connect(g).connect(out); s.start(t0, Math.random() * 0.8); s.stop(t0 + dur + 0.05);
+}
+function tone(t, freq, dur, gain, attack = 0.003) {
+  const o = ctx.createOscillator(), g = ctx.createGain(), t0 = ctx.currentTime + t;
+  o.frequency.value = freq; env(g, t0, gain, attack, dur);
+  o.connect(g).connect(out); o.start(t0); o.stop(t0 + dur + 0.05);
+}
+function keySound() {
+  if (!soundOn || !ctx) return;
+  const v = 0.75 + Math.random() * 0.4;
+  burst(0, 0.018, 'highpass', 3200, 0.7, 0.22 * v);                     // type bar strike
+  burst(0.002, 0.06, 'bandpass', 1100 + Math.random() * 400, 2.5, 0.18 * v); // key body
+  tone(0.004, 95 + Math.random() * 25, 0.07, 0.35 * v);                 // platen thump
+}
 function carriageReturn() {
   if (!soundOn || !ctx) return;
-  noise(0.3, 500, 0.35, 0.7);
-  const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime + 0.22;
-  o.frequency.value = 2093; g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1);
-  o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + 1.2);
+  [1, 2.76, 5.4].forEach((r, i) => tone(0, 1320 * r, 1.4 / (i + 1), [0.07, 0.025, 0.01][i], 0.002)); // small bell
+  for (let i = 0; i < 9; i++) burst(0.18 + i * 0.032, 0.02, 'highpass', 2500, 0.8, 0.05 + i * 0.006);  // ratchet
+  burst(0.18, 0.32, 'bandpass', 700, 0.8, 0.06, 0.05);                  // carriage slide
+  tone(0.5, 85, 0.1, 0.35); burst(0.5, 0.05, 'bandpass', 900, 2, 0.12); // stop thunk
+}
+function flipSound() {
+  if (!soundOn || !ctx) return;
+  burst(0, 0.42, 'lowpass', 2200, 0.6, 0.1, 0.09);        // paper swish
+  burst(0.06, 0.16, 'highpass', 4500, 0.7, 0.03, 0.02);   // light crinkle
 }
 
 /* ---------- Typewriter intro ---------- */
@@ -272,16 +305,21 @@ function finishTyping() {
   typingDone = true; clearTimeout(timer);
   $('typed').textContent = INTRO;
   gsap.to('#enter', {autoAlpha: 1, y: 0, duration: reduce ? 0 : 0.6, startAt: {y: 10}});
+  // Paint the book now, invisibly, so the first frame of the transition doesn't have to draw every page.
+  $('stage').inert = true;
+  gsap.set('#stage', {visibility: 'visible', opacity: 0.001, pointerEvents: 'none'});
   $('enter').focus({preventScroll: true});
 }
 $('intro').addEventListener('click', e => { if (!typingDone && e.target.id !== 'enter') finishTyping(); });
 $('enter').onclick = () => {
   bookOpen = true;
   const d = reduce ? 0 : 1;
+  $('stage').inert = false;
+  // Only opacity and a small translate: both run on the GPU without repainting the pages.
   gsap.timeline()
-    .to('#intro', {autoAlpha: 0, y: -30, duration: 0.7 * d, ease: 'power2.in'})
-    .fromTo('#stage', {autoAlpha: 0}, {autoAlpha: 1, duration: 0.5 * d}, '-=0.1')
-    .fromTo('#book', {scale: 0.9, y: 30, rotationX: 12, transformPerspective: 1200}, {scale: 1, y: 0, rotationX: 0, duration: 1 * d, ease: 'power3.out', clearProps: 'transform'}, '<')
+    .to('#intro', {autoAlpha: 0, y: -16, duration: 0.45 * d, ease: 'power1.in'})
+    .fromTo('#stage', {opacity: 0, y: 18, willChange: 'opacity, transform'},
+      {opacity: 1, y: 0, pointerEvents: 'auto', duration: 0.75 * d, ease: 'power2.out', clearProps: 'transform,willChange'}, 0.2 * d)
     .add(() => { $('intro').hidden = true; pagesEl.querySelector('.toc button')?.focus({preventScroll: true}); });
 };
 
