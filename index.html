@@ -3,38 +3,40 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Home of Mind Drift</title>
+<title>Marginalia, an interactive book</title>
 <!--
   HOW TO CHANGE CHAPTER TITLES
   Edit the CHAPTERS array at the top of the <script> block near the bottom of this file.
+  AUTHOR, BOOK and REPO just above it set your name, the book title and the source link.
   Each entry has:
     label  - the small heading, e.g. "Chapter 1" (shown in the contents and on the chapter page)
-    title  - the chapter name, e.g. "Hartwell Academic Press" (leave "" to show only the label)
+    title  - the chapter name, e.g. "Turning Pages" (leave "" to show only the label)
     body   - two paragraphs of text
     link   - optional; when set, the contents entry opens this URL in a new tab instead of turning pages
+    linkText - optional button text for that link
   Add, remove or reorder entries and the book, page numbers and contents rebuild themselves.
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=EB+Garamond:ital@0;1&family=Special+Elite&display=swap" rel="stylesheet">
 <style>
-:root{--cream:#f4ecdb;--paper:#fbf6ea;--navy:#1c2a44;--charcoal:#2e2e30;--muted:#5f584c;--pw:400px}
+:root{--cream:#f4ecdb;--paper:#fbf6ea;--ink:#1f3d34;--accent:#8a3324;--charcoal:#2e2e30;--muted:#5f584c;--pw:400px}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--cream);color:var(--charcoal);font-family:"EB Garamond",Georgia,serif}
 button{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--navy);outline-offset:3px}
-.sound{position:fixed;top:14px;right:14px;z-index:50;background:var(--paper);border:1px solid var(--navy);border-radius:99px;padding:6px 14px;cursor:pointer;font-size:15px;color:var(--navy)}
-.sound[aria-pressed="true"]{background:var(--navy);color:var(--cream)}
+:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.sound{position:fixed;top:14px;right:14px;z-index:50;background:var(--paper);border:1px solid var(--ink);border-radius:99px;padding:6px 14px;cursor:pointer;font-size:15px;color:var(--ink)}
+.sound[aria-pressed="true"]{background:var(--ink);color:var(--cream)}
 /* Intro */
 #intro{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;z-index:10}
 .type{font-family:"Special Elite","Courier New",monospace;font-size:clamp(1.15rem,4.2vw,2rem);line-height:1.6;color:var(--charcoal);white-space:pre-wrap;max-width:30ch;min-height:5.2em;margin:0}
-.cursor{display:inline-block;width:.55em;height:1.05em;margin-left:2px;vertical-align:-.15em;background:var(--navy);animation:blink 1s steps(1) infinite}
+.cursor{display:inline-block;width:.55em;height:1.05em;margin-left:2px;vertical-align:-.15em;background:var(--ink);animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
-.enter{margin-top:28px;padding:12px 30px;background:var(--navy);color:var(--cream);border:0;border-radius:3px;font-family:"Cormorant Garamond",serif;font-size:1.3rem;letter-spacing:.06em;cursor:pointer;opacity:0;visibility:hidden}
+.enter{margin-top:28px;padding:12px 30px;background:var(--ink);color:var(--cream);border:0;border-radius:3px;font-family:"Cormorant Garamond",serif;font-size:1.3rem;letter-spacing:.06em;cursor:pointer;opacity:0;visibility:hidden}
 /* Book */
 #stage{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;visibility:hidden;opacity:0;touch-action:pan-y}
 .book{position:relative;width:calc(var(--pw)*2);height:calc(var(--pw)*1.42)}
-.cover{position:absolute;inset:-12px;background:var(--navy);border-radius:6px;box-shadow:0 24px 50px rgba(28,42,68,.35)}
+.cover{position:absolute;inset:-12px;background:var(--ink);border-radius:6px;box-shadow:0 24px 50px rgba(31,61,52,.35)}
 .cover-title{position:absolute;left:0;top:0;width:50%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--cream);font-family:"Cormorant Garamond",serif;font-size:calc(var(--pw)*.07);text-align:center;letter-spacing:.04em}
 .cover-title small{font-size:.45em;letter-spacing:.3em;margin-top:.6em;opacity:.7}
 .pages{position:absolute;inset:0}
@@ -47,18 +49,19 @@ button{font:inherit;color:inherit}
 .back .shade{background:linear-gradient(to left,rgba(0,0,0,.08),rgba(0,0,0,.38) 70%,rgba(255,255,255,.25) 92%,rgba(0,0,0,.3))}
 .inner{position:absolute;inset:0;padding:11% 12% 14%;font-size:max(14px,calc(var(--pw)*.037));line-height:1.55}
 .label{font-family:"Cormorant Garamond",serif;text-transform:uppercase;letter-spacing:.22em;font-size:.78em;color:var(--muted);margin:0 0 .4em}
-h2{font-family:"Cormorant Garamond",serif;font-weight:600;color:var(--navy);font-size:1.9em;line-height:1.1;margin:0 0 .7em}
+h2{font-family:"Cormorant Garamond",serif;font-weight:600;color:var(--ink);font-size:1.9em;line-height:1.1;margin:0 0 .7em}
 .inner p{margin:0 0 1em}
-.drop::first-letter{float:left;font-family:"Cormorant Garamond",serif;font-size:3.1em;line-height:.85;padding:.06em .08em 0 0;color:var(--navy)}
-.orn{text-align:center;color:var(--navy);font-size:1.4em;margin-top:1.2em}
+.inner p a{color:var(--accent)}
+.drop::first-letter{float:left;font-family:"Cormorant Garamond",serif;font-size:3.1em;line-height:.85;padding:.06em .08em 0 0;color:var(--accent)}
+.orn{text-align:center;color:var(--accent);font-size:1.4em;margin-top:1.2em}
 .num{position:absolute;bottom:5%;left:0;right:0;text-align:center;font-size:.8em;color:var(--muted)}
 .toc{list-style:none;margin:0;padding:0}
 .toc button,.toc a{display:flex;align-items:baseline;width:100%;gap:.4em;padding:.38em 0;background:none;border:0;text-align:left;cursor:pointer;color:var(--charcoal);text-decoration:none;font-size:1em}
 .toc i{flex:1;border-bottom:1px dotted var(--muted);transform:translateY(-.25em)}
-.toc button:hover span,.toc a:hover span{color:var(--navy);text-decoration:underline}
-.ext{display:inline-block;margin-top:.4em;padding:.4em 1em;border:1px solid var(--navy);color:var(--navy);text-decoration:none;border-radius:2px}
+.toc button:hover span,.toc a:hover span{color:var(--ink);text-decoration:underline}
+.ext{display:inline-block;margin-top:.4em;padding:.4em 1em;border:1px solid var(--ink);color:var(--ink);text-decoration:none;border-radius:2px}
 .controls{display:flex;align-items:center;gap:12px}
-.controls button{background:var(--paper);border:1px solid var(--navy);color:var(--navy);border-radius:3px;padding:8px 16px;cursor:pointer;font-size:16px}
+.controls button{background:var(--paper);border:1px solid var(--ink);color:var(--ink);border-radius:3px;padding:8px 16px;cursor:pointer;font-size:16px}
 .controls button:disabled{opacity:.35;cursor:default}
 .status{min-width:7.5em;text-align:center;font-size:15px;color:var(--muted)}
 /* Single-page mode (phones) */
@@ -80,7 +83,7 @@ h2{font-family:"Cormorant Garamond",serif;font-weight:600;color:var(--navy);font
 
 <main id="stage" aria-label="Book">
   <div class="book" id="book">
-    <div class="cover"><div class="cover-title">Home of Mind Drift<small>LLC</small></div></div>
+    <div class="cover"><div class="cover-title" id="coverTitle"></div></div>
     <div class="pages" id="pages"></div>
   </div>
   <nav class="controls" aria-label="Page navigation">
@@ -93,27 +96,30 @@ h2{font-family:"Cormorant Garamond",serif;font-weight:600;color:var(--navy);font
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script>
+const AUTHOR = 'Ayoub';                                   // your name, shown on the cover and last page
+const BOOK = 'Marginalia';                               // the book's title
+const REPO = 'https://github.com/ayoubcoding111/First-project';
 const CHAPTERS = [
   {label:'Preface', title:'', body:[
-    'Home of Mind Drift is a small house for books, essays and ideas that take their time. We publish work that rewards a slower kind of reading.',
-    'This book is our front door. Turn the pages to meet our imprints, our writing and the people behind them.']},
-  {label:'Chapter 1', title:'Hartwell Academic Press', body:[
-    'Hartwell Academic Press is our publishing imprint for scholarly and educational titles, edited with care and built to last.',
-    'Placeholder: book covers, short descriptions and links to Amazon listings will live here.']},
-  {label:'Chapter 2', title:'Mind Drift', body:[
-    'Mind Drift collects reflective essays on attention, memory and the quiet hours in between.',
-    'Placeholder: featured essays and upcoming books, each with a cover and a short note.']},
-  {label:'Chapter 3', title:'PETRAFIED', link:'https://petrafiedofficial.com', body:[
-    'PETRAFIED is our creative brand, with its own home on the web.',
-    'Visit the PETRAFIED site to see the full collection.']},
-  {label:'Chapter 4', title:'Behind the Pages', body:[
-    'Every book begins as a stray thought written in a margin. This chapter is about the people and process behind ours.',
-    'Placeholder: a short story of how the company began and how we work with authors.']},
+    'Marginalia is a small experiment: a website you read like a book. There is no scrolling here, only pages that turn.',
+    'I built it to see how close a web page can get to the feel of paper. The next few chapters show how it works.']},
+  {label:'Chapter 1', title:'The Typewriter', body:[
+    'The opening message is typed one key at a time, with uneven timing and longer pauses after commas and full stops, the way a person types.',
+    'Sound stays off until you turn it on. Every click, bell and carriage return is generated in the browser, so there are no audio files to load.']},
+  {label:'Chapter 2', title:'Turning Pages', body:[
+    'Each sheet is a two-sided element that rotates around the spine with GSAP, while shading moves across the paper to suggest a curl.',
+    'Pick a chapter from the contents and every page in between turns in order, faster on long jumps. Going back turns them in reverse.']},
+  {label:'Chapter 3', title:'Small Details', body:[
+    'On a phone the book shows one page at a time and you swipe to turn. Arrow keys, page edges and the buttons work everywhere.',
+    'If your device asks for reduced motion, pages change instantly instead of turning, and only the pages you can see are drawn.']},
+  {label:'Chapter 4', title:'Source Code', link: REPO, linkText: 'Open on GitHub', body:[
+    'The whole book is one HTML file with no build step: a few hundred lines of HTML, CSS and JavaScript.',
+    'The source is on GitHub if you want to see how it is put together.']},
   {label:'Chapter 5', title:'Say Hello', body:[
-    'We would love to hear from readers, writers and collaborators.',
-    'Placeholder: email address, social links and a short note on response times.']},
+    `Thanks for reading. I'm ${AUTHOR}, and I like building web experiences that feel a little more physical.`,
+    `You can find more of my work on <a href="https://github.com/ayoubcoding111" target="_blank" rel="noopener">GitHub</a>.`]},
 ];
-const INTRO = 'Welcome to Home of Mind Drift.\nPull up a chair, turn the page,\nand let your mind drift.';
+const INTRO = 'Hello, and welcome.\nThis is a book you read\nby turning its pages.';
 
 const $ = id => document.getElementById(id);
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -126,11 +132,12 @@ const pages = [''];
 CHAPTERS.forEach(c => {
   c.start = pages.length;
   pages.push(`<p class="label">${c.label}</p><h2>${c.title || c.label}</h2><p class="drop">${c.body[0]}</p>`);
-  pages.push(`<p>${c.body[1]}</p>` + (c.link ? `<a class="ext" href="${c.link}" target="_blank" rel="noopener">Visit ${c.title} &nearr;</a>` : '') + `<div class="orn" aria-hidden="true">&#10086;</div>`);
+  pages.push(`<p>${c.body[1]}</p>` + (c.link ? `<a class="ext" href="${c.link}" target="_blank" rel="noopener">${c.linkText || c.title} &nearr;</a>` : '') + `<div class="orn" aria-hidden="true">&#10086;</div>`);
 });
-pages[0] = `<p class="label">Contents</p><h2>Home of Mind Drift</h2><ol class="toc">` + CHAPTERS.map(c => c.link
+pages[0] = `<p class="label">Contents</p><h2>${BOOK}</h2><ol class="toc">` + CHAPTERS.map(c => c.link
   ? `<li><a href="${c.link}" target="_blank" rel="noopener"><span>${heading(c)} &nearr;</span><i></i><b>${c.start + 1}</b></a></li>`
   : `<li><button data-goto="${c.start}"><span>${heading(c)}</span><i></i><b>${c.start + 1}</b></button></li>`).join('') + `</ol>`;
+$('coverTitle').innerHTML = `${BOOK}<small>by ${AUTHOR}</small>`;
 const pageHTML = i => i < pages.length ? `<div class="inner">${pages[i]}<span class="num">${i + 1}</span></div>` : '';
 
 /* ---------- Book state. Desktop: leaf i = pages 2i (front) / 2i+1 (back). Phone: leaf i = page i. ---------- */
