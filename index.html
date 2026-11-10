@@ -7,7 +7,7 @@
 <!--
   HOW TO CHANGE CHAPTER TITLES
   Edit the CHAPTERS array at the top of the <script> block near the bottom of this file.
-  AUTHOR, BOOK and REPO just above it set your name, the book title and the source link.
+  AUTHOR and BOOK just above it set your name and the book title.
   Each entry has:
     label  - the small heading, e.g. "Chapter 1" (shown in the contents and on the chapter page)
     title  - the chapter name, e.g. "Turning Pages" (leave "" to show only the label)
@@ -98,7 +98,6 @@ h2{font-family:"Cormorant Garamond",serif;font-weight:600;color:var(--ink);font-
 <script>
 const AUTHOR = 'Ayoub';                                   // your name, shown on the cover and last page
 const BOOK = 'Marginalia';                               // the book's title
-const REPO = 'https://github.com/ayoubcoding111/First-project';
 const CHAPTERS = [
   {label:'Preface', title:'', body:[
     'Marginalia is a small experiment: a website you read like a book. There is no scrolling here, only pages that turn.',
@@ -112,9 +111,9 @@ const CHAPTERS = [
   {label:'Chapter 3', title:'Small Details', body:[
     'On a phone the book shows one page at a time and you swipe to turn. Arrow keys, page edges and the buttons work everywhere.',
     'If your device asks for reduced motion, pages change instantly instead of turning, and only the pages you can see are drawn.']},
-  {label:'Chapter 4', title:'Source Code', link: REPO, linkText: 'Open on GitHub', body:[
+  {label:'Chapter 4', title:'Source Code', body:[
     'The whole book is one HTML file with no build step: a few hundred lines of HTML, CSS and JavaScript.',
-    'The source is on GitHub if you want to see how it is put together.']},
+    'Keeping it that small means it loads quickly, even on a slow phone connection.']},
   {label:'Chapter 5', title:'Say Hello', body:[
     `Thanks for reading. I'm ${AUTHOR}, and I like building web experiences that feel a little more physical.`,
     `You can find more of my work on <a href="https://github.com/ayoubcoding111" target="_blank" rel="noopener">GitHub</a>.`]},
